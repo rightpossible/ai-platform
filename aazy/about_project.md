@@ -1,0 +1,2 @@
+so we are building a plform like  @https://www.zoho.com/ , so we wantto use this dashbord to inigrate like 100 apps, into one, this other application will be hosted on a diffrent subdomain, service, be using diffrent stack and also be using difrrent auth system, they will be mostly opensouce project that we can slef host but we want to selfhost them ourlseve and users can come and pay for subscription and use our apps, if they want to, so they have acess to the app based on their subscription 
+
