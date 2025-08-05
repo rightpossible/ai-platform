@@ -15,6 +15,21 @@ export interface IApp extends Document {
   minimumPlanLevel?: number; // Minimum plan level required (0=free, 1=starter, 2=pro, 3=enterprise)
   category?: string; // App category for organization
   
+  // App Catalog Enhancement - Phase 2
+  shortDescription?: string; // Brief one-liner for cards
+  longDescription?: string; // Detailed description for app pages
+  screenshots?: string[]; // Array of screenshot URLs
+  features?: string[]; // Key features list
+  tags?: string[]; // Tags for filtering and search
+  website?: string; // Official website URL
+  supportUrl?: string; // Support/help URL
+  integrationStatus: 'ready' | 'beta' | 'coming_soon'; // Integration readiness
+  popularity?: number; // Usage popularity score (0-100)
+  rating?: number; // User rating (1-5)
+  isPopular?: boolean; // Featured/popular app flag
+  isFeatured?: boolean; // Featured on homepage
+  launchInNewTab?: boolean; // Open in new tab vs iframe
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,6 +85,63 @@ const AppSchema = new Schema<IApp>({
     type: String,
     maxlength: 50,
     default: 'business'
+  },
+  // App Catalog Enhancement - Phase 2
+  shortDescription: {
+    type: String,
+    maxlength: 150
+  },
+  longDescription: {
+    type: String,
+    maxlength: 2000
+  },
+  screenshots: [{
+    type: String,
+    maxlength: 500
+  }],
+  features: [{
+    type: String,
+    maxlength: 100
+  }],
+  tags: [{
+    type: String,
+    maxlength: 30
+  }],
+  website: {
+    type: String,
+    maxlength: 300
+  },
+  supportUrl: {
+    type: String,
+    maxlength: 300
+  },
+  integrationStatus: {
+    type: String,
+    enum: ['ready', 'beta', 'coming_soon'],
+    default: 'ready'
+  },
+  popularity: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5
+  },
+  isPopular: {
+    type: Boolean,
+    default: false
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false
+  },
+  launchInNewTab: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }

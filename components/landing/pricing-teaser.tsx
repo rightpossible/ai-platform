@@ -1,63 +1,102 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ArrowRight, Zap, Crown, Rocket } from 'lucide-react';
+import { CheckCircle, ArrowRight, Zap, Crown, Rocket, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function PricingTeaserSection() {
-  const plans = [
-    {
-      name: "Starter",
-      description: "Perfect for small businesses getting started",
-      price: "$89",
-      period: "per month",
-      icon: Zap,
-      features: [
-        "5 Core AI Agents",
-        "20 Business Modules",
-        "Basic Analytics",
-        "Email Support",
-        "5 Team Members"
-      ],
-      cta: "Start Free Trial",
-      popular: false,
-      color: "bg-blue-500"
-    },
-    {
-      name: "Professional",
-      description: "Most popular for growing businesses",
-      price: "$189",
-      period: "per month",
-      icon: Crown,
-      features: [
-        "All 8 AI Agent Types",
-        "50+ Business Modules",
-        "Advanced Analytics",
-        "Priority Support",
-        "25 Team Members",
-        "Custom Integrations"
-      ],
-      cta: "Start Free Trial",
-      popular: true,
-      color: "bg-primary"
-    },
-    {
-      name: "Enterprise",
-      description: "For large organizations with custom needs",
-      price: "Custom",
-      period: "pricing",
-      icon: Rocket,
-      features: [
-        "Unlimited AI Agents",
-        "All 103+ Modules",
-        "Custom Analytics",
-        "Dedicated Support",
-        "Unlimited Team Members",
-        "White-label Options",
-        "On-premise Deployment"
-      ],
-      cta: "Contact Sales",
-      popular: false,
-      color: "bg-purple-500"
+  const router = useRouter();
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await fetch('/api/plans');
+      if (response.ok) {
+        const data = await response.json();
+        // Transform our database plans to display format
+        const transformedPlans = data.plans?.slice(1, 4).map((plan: any, index: number) => ({
+          ...plan,
+          displayPrice: plan.price === 0 ? 'Free' : `$${(plan.price / 100).toFixed(0)}`,
+          period: 'per month',
+          icon: index === 0 ? Zap : index === 1 ? Crown : Rocket,
+          cta: plan.price === 0 ? 'Start Free' : 'Start Free Trial',
+          color: index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-primary' : 'bg-purple-500'
+        })) || [];
+        setPlans(transformedPlans);
+      } else {
+        // Fallback to static plans if API fails
+        setPlans([
+          {
+            name: "Starter",
+            description: "Perfect for small businesses getting started",
+            displayPrice: "$29",
+            period: "per month",
+            icon: Zap,
+            features: [
+              "8 Business Apps",
+              "10 Team Members",
+              "50GB Storage",
+              "Email Support",
+              "Basic Analytics"
+            ],
+            cta: "Start Free Trial",
+            isPopular: false,
+            color: "bg-blue-500"
+          },
+          {
+            name: "Professional",
+            description: "Most popular for growing businesses",
+            displayPrice: "$79",
+            period: "per month",
+            icon: Crown,
+            features: [
+              "All Apps + AI Features",
+              "50 Team Members",
+              "500GB Storage",
+              "Priority Support",
+              "Advanced Analytics",
+              "Custom Integrations"
+            ],
+            cta: "Start Free Trial",
+            isPopular: true,
+            color: "bg-primary"
+          },
+          {
+            name: "Enterprise",
+            description: "For large organizations with custom needs",
+            displayPrice: "$199",
+            period: "per month",
+            icon: Rocket,
+            features: [
+              "Everything in Professional",
+              "Unlimited Team Members",
+              "Unlimited Storage",
+              "24/7 Phone Support",
+              "Custom Development",
+              "On-premise Options"
+            ],
+            cta: "Contact Sales",
+            isPopular: false,
+            color: "bg-purple-500"
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch plans:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleGetStarted = () => {
+    router.push('/pricing');
+  };
 
   return (
     <section className="py-16 bg-muted/30" id="pricing">
@@ -95,70 +134,78 @@ export function PricingTeaserSection() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan, index) => {
-            const IconComponent = plan.icon;
-            return (
-              <div 
-                key={index}
-                className={`bg-card border rounded-xl p-8 relative hover:shadow-lg transition-all duration-300 ${
-                  plan.popular ? 'border-primary shadow-md scale-105' : 'border-border'
-                }`}
-              >
-                {/* Popular Badge */}
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
-                      Most Popular
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading pricing plans...</span>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {plans.map((plan, index) => {
+              const IconComponent = plan.icon;
+              return (
+                <div 
+                  key={plan._id || index}
+                  className={`bg-card border rounded-xl p-8 relative hover:shadow-lg transition-all duration-300 ${
+                    plan.isPopular ? 'border-primary shadow-md scale-105' : 'border-border'
+                  }`}
+                >
+                  {/* Popular Badge */}
+                  {plan.isPopular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                        Most Popular
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Header */}
+                  <div className="text-center mb-8">
+                    <div className={`inline-flex items-center justify-center h-12 w-12 rounded-lg ${plan.color} text-white mb-4`}>
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      {plan.description}
+                    </p>
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-3xl font-bold text-foreground">
+                        {plan.displayPrice}
+                      </span>
+                      <span className="text-muted-foreground ml-1">
+                        /{plan.period}
+                      </span>
                     </div>
                   </div>
-                )}
 
-                {/* Header */}
-                <div className="text-center mb-8">
-                  <div className={`inline-flex items-center justify-center h-12 w-12 rounded-lg ${plan.color} text-white mb-4`}>
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    {plan.name}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    {plan.description}
-                  </p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-3xl font-bold text-foreground">
-                      {plan.price}
-                    </span>
-                    <span className="text-muted-foreground ml-1">
-                      /{plan.period}
-                    </span>
-                  </div>
+                  {/* Features */}
+                  <ul className="space-y-3 mb-8">
+                    {(plan.features || []).slice(0, 6).map((feature: string, featureIndex: number) => (
+                      <li key={featureIndex} className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
+                        <span className="text-muted-foreground text-sm">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  <Button 
+                    onClick={handleGetStarted}
+                    className={`w-full ${plan.isPopular ? '' : 'variant-outline'}`}
+                    variant={plan.isPopular ? 'default' : 'outline'}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-muted-foreground text-sm">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <Button 
-                  className={`w-full ${plan.popular ? '' : 'variant-outline'}`}
-                  variant={plan.popular ? 'default' : 'outline'}
-                >
-                  {plan.cta}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Additional Info */}
         <div className="grid md:grid-cols-2 gap-8 mb-16">
@@ -213,8 +260,8 @@ export function PricingTeaserSection() {
             </div>
           </div>
           <div className="mt-8">
-            <Button variant="outline">
-              View All FAQ
+            <Button variant="outline" onClick={handleGetStarted}>
+              View All Plans & Pricing
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

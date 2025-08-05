@@ -18,7 +18,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { name, slug, ssoUrl, description, status, color } = await request.json();
+    const appData = await request.json();
+    const {
+      name,
+      slug,
+      ssoUrl,
+      description,
+      status,
+      color,
+      // Plan-related fields
+      requiresPlan,
+      minimumPlanLevel,
+      category,
+      // Enhanced catalog fields
+      shortDescription,
+      longDescription,
+      screenshots,
+      features,
+      tags,
+      website,
+      supportUrl,
+      integrationStatus,
+      popularity,
+      rating,
+      isPopular,
+      isFeatured,
+      launchInNewTab
+    } = appData;
 
     if (!name || !slug || !ssoUrl) {
       return NextResponse.json({ error: 'Name, slug, and SSO URL are required' }, { status: 400 });
@@ -32,14 +58,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
     }
 
-    // Create new app
+    // Create new app with all fields
     const newApp = new App({
+      // Basic fields
       name,
       slug,
       ssoUrl,
       description,
       status: status || 'active',
-      color: color || 'bg-blue-500'
+      color: color || 'bg-blue-500',
+      
+      // Plan-related fields
+      requiresPlan: requiresPlan || false,
+      minimumPlanLevel: minimumPlanLevel || 0,
+      category: category || 'business',
+      
+      // Enhanced catalog fields
+      shortDescription,
+      longDescription,
+      screenshots: screenshots || [],
+      features: features || [],
+      tags: tags || [],
+      website,
+      supportUrl,
+      integrationStatus: integrationStatus || 'ready',
+      popularity: popularity || 0,
+      rating: rating > 0 ? rating : undefined, // Only set rating if it's greater than 0
+      isPopular: isPopular || false,
+      isFeatured: isFeatured || false,
+      launchInNewTab: launchInNewTab || false
     });
 
     await newApp.save();

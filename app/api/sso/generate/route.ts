@@ -5,6 +5,7 @@ import { getUserByAuth0Id } from '@/lib/auth/user-sync';
 import { connectDB } from '@/lib/db/connection';
 import { SSOToken } from '@/lib/db/schemas/ssoToken';
 import { App } from '@/lib/db/schemas/app';
+import { checkAppAccess } from '@/lib/access-control/app-access';
 import { createHash } from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -25,6 +26,36 @@ export async function POST(request: NextRequest) {
     const user = await getUserByAuth0Id(session.user.sub);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if user has access to the target app
+    const accessResult = await checkAppAccess(user.id, targetApp);
+    if (!accessResult.hasAccess) {
+      let errorMessage = 'Access denied to this application.';
+      let statusCode = 403;
+
+      switch (accessResult.reason) {
+        case 'app_inactive':
+          errorMessage = 'The requested application is currently unavailable.';
+          statusCode = 404;
+          break;
+        case 'subscription_expired':
+          errorMessage = 'Your subscription has expired. Please renew your subscription to access this app.';
+          statusCode = 402;
+          break;
+        case 'upgrade_required':
+          errorMessage = `This application requires a higher subscription plan. Please upgrade to access it.`;
+          statusCode = 403;
+          break;
+      }
+
+      return NextResponse.json({ 
+        error: errorMessage,
+        reason: accessResult.reason,
+        requiredPlanLevel: accessResult.requiredPlanLevel,
+        userPlanLevel: accessResult.userPlanLevel,
+        upgradeUrl: accessResult.upgradeUrl
+      }, { status: statusCode });
     }
 
     // Generate SSO token

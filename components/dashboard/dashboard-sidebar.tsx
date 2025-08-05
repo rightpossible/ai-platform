@@ -41,6 +41,7 @@ import {
   Bell,
   HelpCircle
 } from 'lucide-react';
+import { SubscriptionWidget } from './subscription-widget';
 import { Card } from '@/components/ui/card';
 
 export function DashboardSidebar() {
@@ -77,6 +78,8 @@ export function DashboardSidebar() {
       title: 'Main',
       items: [
         { name: 'Dashboard', icon: Home, href: '/dashboard' },
+        { name: 'App Discovery', icon: Star, href: '/apps/discover' },
+        { name: 'Manage Plans', icon: CreditCard, href: '/pricing' },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings' }
       ]
     },
@@ -268,6 +271,11 @@ export function DashboardSidebar() {
             )}
           </div>
         ))}
+        
+        {/* Subscription Widget */}
+        <div className="p-4 border-t mt-auto">
+          <SubscriptionWidget />
+        </div>
       </div>
     </div>
   );
