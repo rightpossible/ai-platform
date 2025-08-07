@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSSO } from '@/hooks/use-sso';
+import { useErpNext } from '@/hooks/use-erpnext';
+import { PasswordDialog } from '@/components/erpnext/password-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -88,7 +90,18 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
   const [apps, setApps] = useState<CatalogApp[]>([]);
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const { isLoading: ssoLoading, error, generateTokenAndRedirect, clearError } = useSSO();
+  const { 
+    isLoading: erpNextLoading, 
+    isCreating: erpNextCreating, 
+    error: erpNextError, 
+    site: erpNextSite,
+    checkExistingSite, 
+    createSite, 
+    openSite, 
+    clearError: clearErpNextError 
+  } = useErpNext();
 
   useEffect(() => {
     fetchAppCatalog();
@@ -140,6 +153,21 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
     return true;
   });
 
+  const handleCreateErpNextSite = async (password: string) => {
+    const site = await createSite({ password });
+    if (site) {
+      setShowPasswordDialog(false);
+      // Show success message and redirect
+      setTimeout(() => {
+        if (site.status === 'active') {
+          openSite(site.siteUrl);
+        } else {
+          alert('Your business platform is being created. You will receive an email when it\'s ready!');
+        }
+      }, 1000);
+    }
+  };
+
   const getAccessBadge = (app: CatalogApp) => {
     if (app.hasAccess) {
       if (app.accessReason === 'free') {
@@ -182,6 +210,27 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
         return;
       }
       
+      // Special handling for ERPNext
+      if (app.slug === 'erpnext-business-suite') {
+        clearErpNextError();
+        
+        // Check if user already has an ERPNext site
+        const existingSite = await checkExistingSite();
+        if (existingSite && existingSite.status === 'active') {
+          // User already has a site, open it
+          openSite(existingSite.siteUrl);
+          return;
+        } else if (existingSite && existingSite.status === 'creating') {
+          alert('Your business platform is still being created. Please check your email for updates.');
+          return;
+        }
+        
+        // User doesn't have a site, show password dialog
+        setShowPasswordDialog(true);
+        return;
+      }
+      
+      // Regular app handling
       clearError();
       await generateTokenAndRedirect(app.slug);
     };
@@ -224,14 +273,14 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
                   variant="outline" 
                   size="sm"
                   onClick={handleOpenApp}
-                  disabled={ssoLoading || app.status !== 'active' || app.integrationStatus === 'coming_soon'}
+                  disabled={ssoLoading || erpNextLoading || app.status !== 'active' || app.integrationStatus === 'coming_soon'}
                 >
-                  {ssoLoading ? (
+                  {(ssoLoading || (erpNextLoading && app.slug === 'erpnext-business-suite')) ? (
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
                   ) : (
                     <ExternalLink className="mr-2 h-4 w-4" />
                   )}
-                  {ssoLoading ? 'Opening...' : 'Open'}
+                  {(ssoLoading || (erpNextLoading && app.slug === 'erpnext-business-suite')) ? 'Opening...' : 'Open'}
                 </Button>
               ) : (
                 <Link href="/pricing">
@@ -333,14 +382,14 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
               variant="outline" 
               size="sm"
               onClick={handleOpenApp}
-              disabled={ssoLoading || app.status !== 'active' || app.integrationStatus === 'coming_soon'}
+              disabled={ssoLoading || erpNextLoading || app.status !== 'active' || app.integrationStatus === 'coming_soon'}
             >
-              {ssoLoading ? (
+              {(ssoLoading || (erpNextLoading && app.slug === 'erpnext-business-suite')) ? (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
               ) : (
                 <ExternalLink className="mr-2 h-4 w-4" />
               )}
-              {ssoLoading ? 'Opening...' : 'Open'}
+              {(ssoLoading || (erpNextLoading && app.slug === 'erpnext-business-suite')) ? 'Opening...' : 'Open'}
             </Button>
           ) : (
             <Link href="/pricing">
@@ -366,11 +415,19 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
 
   return (
     <div className="space-y-6">
-      {/* Error Alert */}
+      {/* Error Alerts */}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>
             SSO Error: {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {erpNextError && !showPasswordDialog && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            ERPNext Error: {erpNextError}
           </AlertDescription>
         </Alert>
       )}
@@ -423,6 +480,15 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
           </Link>
         </div>
       )}
+
+      {/* ERPNext Password Dialog */}
+      <PasswordDialog
+        isOpen={showPasswordDialog}
+        onClose={() => setShowPasswordDialog(false)}
+        onSubmit={handleCreateErpNextSite}
+        isLoading={erpNextCreating}
+        error={erpNextError}
+      />
     </div>
   );
 }

@@ -79,6 +79,7 @@ export function DashboardSidebar() {
       items: [
         { name: 'Dashboard', icon: Home, href: '/dashboard' },
         { name: 'App Discovery', icon: Star, href: '/apps/discover' },
+        { name: 'Business Platform', icon: Building2, href: '/dashboard/erpnext-credentials' },
         { name: 'Manage Plans', icon: CreditCard, href: '/pricing' },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings' }
       ]

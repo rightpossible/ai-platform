@@ -163,3 +163,21 @@ A **full-featured, Zoho-style SaaS web platform** that:
 ---
 
 Would you like me to turn this into a product requirements document (PRD), pitch deck content, or a Notion-style team onboarding page?
+
+
+
+THing we can start working on
+
+CRM
+Helpdesk (customer suport)
+Books - Modern desktop accounting
+
+
+
+python3 ./easy-install.py deploy \
+    --project=crm_prod_setup \
+    --email=email.example.com \
+    --image=ghcr.io/frappe/crm \
+    --version=stable \
+    --app=crm \
+    --sitename subdomain.domain.tld

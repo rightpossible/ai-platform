@@ -1,10 +1,96 @@
-import { connectDB } from '@/lib/db/connection';
-import { App } from '@/lib/db/schemas/app';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default async function AppsPage() {
-  await connectDB();
-  const apps = await App.find().sort({ createdAt: -1 });
+interface AppData {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  shortDescription?: string;
+  status: string;
+  color?: string;
+  category?: string;
+  tags?: string[];
+  features?: string[];
+  screenshots?: string[];
+  rating?: number;
+  popularity?: number;
+  integrationStatus?: string;
+  requiresPlan: boolean;
+  minimumPlanLevel?: number;
+  isPopular?: boolean;
+  isFeatured?: boolean;
+}
+
+export default function AppsPage() {
+  const searchParams = useSearchParams();
+  const [apps, setApps] = useState<AppData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+  const [seedMessage, setSeedMessage] = useState('');
+
+  useEffect(() => {
+    fetchApps();
+    
+    // Check if redirected from delete page
+    if (searchParams.get('deleted') === 'true') {
+      setSeedMessage('✅ App deleted successfully!');
+      // Clear message after 3 seconds
+      setTimeout(() => setSeedMessage(''), 3000);
+    }
+  }, [searchParams]);
+
+  const fetchApps = async () => {
+    try {
+      const response = await fetch('/api/admin/apps');
+      if (response.ok) {
+        const data = await response.json();
+        setApps(data.apps || []);
+      }
+    } catch (error) {
+      console.error('Error fetching apps:', error);
+    }
+    setLoading(false);
+  };
+
+  const handleSeedErpNext = async () => {
+    setSeeding(true);
+    setSeedMessage('');
+    
+    try {
+      const response = await fetch('/api/admin/seed-erpnext', {
+        method: 'POST'
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSeedMessage(data.isNewApp ? '✅ ERPNext app seeded successfully!' : '✅ ERPNext app already exists');
+        // Refresh the apps list
+        await fetchApps();
+      } else {
+        setSeedMessage('❌ Failed to seed ERPNext app');
+      }
+    } catch (error) {
+      console.error('Error seeding ERPNext:', error);
+      setSeedMessage('❌ Error seeding ERPNext app');
+    }
+    
+    setSeeding(false);
+    // Clear message after 3 seconds
+    setTimeout(() => setSeedMessage(''), 3000);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -14,6 +100,13 @@ export default async function AppsPage() {
           <p className="text-gray-600">Add and manage applications for SSO</p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={handleSeedErpNext}
+            disabled={seeding}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {seeding ? 'Seeding...' : 'Seed ERPNext App'}
+          </button>
           <Link 
             href="/admin/plans/apps" 
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -28,6 +121,17 @@ export default async function AppsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Seed Message */}
+      {seedMessage && (
+        <div className={`p-4 rounded-lg ${
+          seedMessage.includes('✅') 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {seedMessage}
+        </div>
+      )}
 
       {/* Apps Table */}
       <div className="bg-white rounded-lg shadow-sm border">
@@ -108,7 +212,7 @@ export default async function AppsPage() {
                         }`}>
                           {app.status}
                         </span>
-                        {app.popularity > 0 && (
+                        {app.popularity && app.popularity > 0 && (
                           <span className="text-xs text-gray-500">{app.popularity}% popular</span>
                         )}
                       </div>
@@ -132,7 +236,7 @@ export default async function AppsPage() {
                         {app.screenshots && app.screenshots.length > 0 && (
                           <span className="text-xs text-gray-600">{app.screenshots.length} screenshots</span>
                         )}
-                        {app.rating > 0 && (
+                        {app.rating && app.rating > 0 && (
                           <span className="text-xs text-gray-600">⭐ {app.rating.toFixed(1)}</span>
                         )}
                       </div>
@@ -144,12 +248,16 @@ export default async function AppsPage() {
                       >
                         Edit
                       </Link>
-                      <Link 
-                        href={`/admin/apps/delete/${app._id}`} 
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${app.name}"? This action cannot be undone.`)) {
+                            window.location.href = `/admin/apps/delete/${app._id}`;
+                          }
+                        }}
                         className="text-red-600 hover:text-red-700"
                       >
                         Delete
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))}

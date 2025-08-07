@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EnhancedAppGrid } from '@/components/dashboard/enhanced-app-grid';
+import { ErpNextCredentialsWidget } from '@/components/erpnext/credentials-widget';
 import Link from 'next/link';
 import { 
   Search, 
@@ -117,6 +118,9 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
+
+      {/* ERPNext Credentials Widget */}
+      <ErpNextCredentialsWidget />
 
       {/* Apps Grid */}
       <EnhancedAppGrid 
