@@ -30,6 +30,9 @@ export interface IApp extends Document {
   isFeatured?: boolean; // Featured on homepage
   launchInNewTab?: boolean; // Open in new tab vs iframe
   
+  // SSO Integration
+  apiKey?: string; // API key for SSO validation requests
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -142,6 +145,12 @@ const AppSchema = new Schema<IApp>({
   launchInNewTab: {
     type: Boolean,
     default: false
+  },
+  // SSO Integration
+  apiKey: {
+    type: String,
+    maxlength: 100,
+    sparse: true // Allow null values, but enforce uniqueness when present
   }
 }, {
   timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
