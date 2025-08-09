@@ -102,19 +102,16 @@ export default function ErpNextCredentialsPage() {
 
   const checkUserAccess = async () => {
     try {
-      const response = await fetch('/api/apps/catalog');
+      const response = await fetch('/api/erpnext/access');
       if (response.ok) {
         const data = await response.json();
-        const erpNextApp = data.apps?.find((app: any) => app.slug === 'erpnext-business-suite');
-        if (erpNextApp) {
-          setHasAccess(erpNextApp.hasAccess);
-          setAccessInfo({
-            accessReason: erpNextApp.accessReason,
-            requiredPlanLevel: erpNextApp.requiredPlanLevel,
-            userPlanLevel: erpNextApp.userPlanLevel,
-            userSubscription: data.userSubscription
-          });
-        }
+        setHasAccess(data.hasAccess);
+        setAccessInfo({
+          accessReason: data.accessReason,
+          requiredPlanLevel: data.requiredPlanLevel,
+          userPlanLevel: data.userPlanLevel,
+          upgradeUrl: data.upgradeUrl
+        });
       }
     } catch (error) {
       console.error('Error checking user access:', error);
@@ -488,7 +485,7 @@ export default function ErpNextCredentialsPage() {
               <Building2 className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">ERPNext Business Suite</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Business Suite</h3>
               <p className="text-gray-600">Your complete business management platform</p>
             </div>
           </div>
@@ -525,7 +522,7 @@ export default function ErpNextCredentialsPage() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => window.open(site.siteUrl, '_blank')}
+                      onClick={() => window.open(`${site.siteUrl}/app/home`, '_blank')}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/connection';
 import { getUserAppAccess } from '@/lib/access-control/app-access';
 import { getUserByAuth0Id } from '@/lib/auth/user-sync';
 import { auth0 } from '@/lib/auth0';
+import { SubscriptionPlan } from '@/lib/db/schemas/subscriptionPlan';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,13 +24,27 @@ export async function GET(request: NextRequest) {
     // Use the centralized access control function
     const { apps, subscription } = await getUserAppAccess(user.id);
 
+    // Filter out ERPNext app from regular catalog (it has its own dedicated section)
+    const filteredApps = apps.filter(app => app.slug !== 'business-suite');
+
+    // Get the actual plan data if subscription exists
+    let planData = null;
+    if (subscription) {
+      await connectDB();
+      const plan = await SubscriptionPlan.findById(subscription.planId);
+      planData = plan ? {
+        name: plan.name,
+        position: subscription.planLevel
+      } : {
+        name: 'Unknown Plan',
+        position: subscription.planLevel
+      };
+    }
+
     return NextResponse.json({
-      apps,
+      apps: filteredApps,
       userSubscription: subscription ? {
-        plan: {
-          name: subscription.planId, // This will need to be populated properly
-          position: subscription.planLevel
-        },
+        plan: planData,
         status: subscription.status
       } : null
     });

@@ -74,7 +74,7 @@ export function PasswordDialog({ isOpen, onClose, onSubmit, isLoading, error }: 
             <div>
               <DialogTitle>Create Your Business Platform</DialogTitle>
               <DialogDescription>
-                Set up your personal ERPNext business suite
+                Set up your personal business suite
               </DialogDescription>
             </div>
           </div>

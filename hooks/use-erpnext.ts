@@ -102,7 +102,7 @@ export function useErpNext() {
   };
 
   const openSite = (siteUrl: string) => {
-    window.open(siteUrl, '_blank');
+    window.open(`${siteUrl}/app/home`, '_blank');
   };
 
   const clearError = () => {

@@ -109,9 +109,11 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
 
   const fetchAppCatalog = async () => {
     try {
-      const response = await fetch('/api/apps/catalog');
+      // Add cache-busting parameter to ensure fresh data
+      const response = await fetch(`/api/apps/catalog?_t=${Date.now()}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched apps:', data.apps?.map((app: CatalogApp) => ({ name: app.name, slug: app.slug })));
         setApps(data.apps || []);
         setUserSubscription(data.userSubscription);
       }
@@ -131,6 +133,11 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
 
   // Filter and search apps
   const filteredApps = apps.filter(app => {
+    // Filter out ERPNext app (has its own dedicated section)
+    if (app.slug === 'business-suite' || app.name.toLowerCase().includes('suite')) {
+      return false;
+    }
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -211,7 +218,7 @@ export function EnhancedAppGrid({ viewMode, filterBy = 'all', searchQuery = '' }
       }
       
       // Special handling for ERPNext
-      if (app.slug === 'erpnext-business-suite') {
+      if (app.slug === 'business-suite') {
         clearErpNextError();
         
         // Check if user already has an ERPNext site

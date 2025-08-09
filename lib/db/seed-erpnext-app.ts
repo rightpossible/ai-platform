@@ -5,7 +5,7 @@ export async function seedErpNextApp() {
   await connectDB();
 
   // Check if ERPNext app already exists
-  const existingApp = await App.findOne({ slug: 'erpnext-business-suite' });
+  const existingApp = await App.findOne({ slug: 'business-suite' });
   if (existingApp) {
     console.log('✅ ERPNext app already exists');
     return existingApp;
@@ -14,7 +14,7 @@ export async function seedErpNextApp() {
   // Create ERPNext app
   const erpNextApp = {
     name: 'All-in-One Business Pro',
-    slug: 'erpnext-business-suite',
+    slug: 'business-suite',
     ssoUrl: '/api/erpnext/create-site', // Special endpoint for ERPNext
     description: 'Complete business management platform with CRM, HR, Accounting, Project Management, and more',
     status: 'active' as const,
@@ -23,7 +23,7 @@ export async function seedErpNextApp() {
     
     // Plan-related fields
     requiresPlan: true,
-    minimumPlanLevel: 2, // Pro plan required
+    minimumPlanLevel: 2, // Starter plan required (position 2)
     category: 'business',
     
     // Enhanced catalog fields
